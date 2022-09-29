@@ -4,6 +4,7 @@ const app = express();
 const mysql = require('mysql');
 const md5 = require('md5');
 const jwt = require('jsonwebtoken');
+const now = Date.now();
 // import * as dotenv from 'dotenv';
 // dotenv.config()
 
@@ -33,7 +34,7 @@ conn.connect((err) =>{
   console.log('Mysql Connected...');
 });
 
-// login
+// router
 app.post('/auth/login', (req, res) => {
   const username = req.body.username;
   const password = md5(req.body.password)
@@ -41,38 +42,60 @@ app.post('/auth/login', (req, res) => {
   let query = conn.query(sql, (err, results) => {
     if (err) throw err;
     if (results.length == 1) {
-      const token = createJwt(results.user_id);
+      // console.log(results[0]);
+      const token = createJwt(results[0].user_id);
       const data = {
         accessToken: token
       };
       console.log(verify(token));
+      res.setHeader('content-type', 'application/json');
       res.send(JSON.stringify({"status": 200, "error": null, "response": data}));
     } else {
+      res.setHeader('content-type', 'application/json');
       res.send(JSON.stringify({"status": 401, "error": 'Unauthorized', "response": [] }));
     }
   });
 });
 
-const sss  =  new Date().toLocaleString("en-US", {timeZone: "Asia/Makassar"})
+app.post('/auth/verify', (req, res) => {
+  const token = req.body.token;
+  const tokenVerify = verify(token)
+  console.log(tokenVerify.status);
+  if (tokenVerify.status) {
+    res.setHeader('content-type', 'application/json');
+    res.send(JSON.stringify({"status": 200, "error": null, "response": tokenVerify.data}));
+  } else {
+    res.setHeader('content-type', 'application/json');
+    res.send(JSON.stringify({"status": 403, "error": "ExpiredToken", "response": tokenVerify.data}));
+  }
 
-const date = require('date-and-time')
-const now  =  new Date() //.toLocaleString("en-US", {timeZone: "Asia/Makassar"})
-const value = date.addMinutes(now, 60);
-console.log("sss "+ sss);
-console.log("time NOW " + now)
-console.log("time NEXT " + value)
+})
 
 // functions
 function verify(token) {
   const payload = jwt.verify(token, process.env.JWT_SECRET_KEY)
-  return payload;
+  if ((payload.exp - now) >0 ) {
+    return {
+      status:true,
+      msg: "Tuken sudah sesuai",
+      data: payload,
+    };
+  } else {
+    return {
+      status:false,
+      msg: "token sudah tidak berlaku.",
+      data:[]
+    }
+  }
 }
 
 function createJwt(userId) {
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
   let data = {
-        time: Date(),
-        userId,
+    iat: now,
+    exp:now+(1000*60*60*24), // satu hari (24 jam)
+    // exp:now, // satu hari (24 jam)
+    userId,
   }
   const token = jwt.sign(data, jwtSecretKey);
   return token;
