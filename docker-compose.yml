@@ -1,0 +1,33 @@
+version: '3'
+services:
+  rest:
+    build:
+      context: .
+    image: 'fikridulumina/base-nodejs:dev-1.0.0'
+    container_name: rest_auth
+    ports:
+      - '${APP_PORT}:${APP_PORT}'
+    volumes:
+      - './:/opt/app'
+    depends_on:
+      - dbMysql
+    networks:
+      - auth
+
+  dbMysql:
+    image: 'mysql:5.7'
+    container_name: db_auth
+    restart: always
+    environment:
+      MYSQL_DATABASE: '${DB_NAME}'
+      MYSQL_USER: '${DB_USER}'
+      MYSQL_PASSWORD: '${DB_PASS}'
+      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
+    ports:
+      - '${DB_PORT}'
+    volumes:
+      - './my-db:/var/lib/mysql'
+    networks:
+      - auth
+networks:
+  auth: null
