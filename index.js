@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
   );
 });
 
-app.post("/auth/login", (req, res) => {
+app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = md5(req.body.password);
   let sql =
@@ -75,7 +75,7 @@ app.post("/auth/login", (req, res) => {
   });
 });
 
-app.post("/auth/verify", (req, res) => {
+app.post("/verify", (req, res) => {
   const token = req.body.token;
   const tokenVerify = verify(token);
   console.log(tokenVerify.status);
@@ -119,7 +119,6 @@ function createJwt(userId) {
   let data = {
     iss: now,
     exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
-    // exp:now, // satu hari (24 jam)
     userId,
   };
   const token = jwt.sign(data, jwtSecretKey);
