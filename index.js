@@ -117,7 +117,7 @@ function verify(token) {
 function createJwt(userId) {
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
   let data = {
-    iat: now,
+    iss: now,
     exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
     // exp:now, // satu hari (24 jam)
     userId,
