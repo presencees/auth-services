@@ -5,15 +5,13 @@ services:
       context: .
     image: "fikridulumina/auth-services:dev-1.0.0"
     container_name: app_auth
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - "./.env/:/opt/app/.env"
       - "./index.js/:/opt/app/index.js"
     depends_on:
       - dbAuth
     networks:
-      - auth
+      - kong-net
     restart: always
     command: sh -c "node index.js"
 
@@ -31,19 +29,8 @@ services:
     volumes:
       - "./my-db:/var/lib/mysql"
     networks:
-      - auth
-  dbAuthPma:
-    depends_on:
-      - dbAuth
-    image: phpmyadmin/phpmyadmin
-    container_name: dbAuthPma
-    restart: always
-    ports:
-      - "3032:80"
-    environment:
-      PMA_HOST: dbAuth
-    networks:
-      - auth
+      - kong-net
 
 networks:
-  auth: null
+  kong-net: 
+    external: true
