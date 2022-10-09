@@ -25,3 +25,8 @@ For production environments...
 ```sh
 docker-compose up -d
 ```
+
+## Restore Database
+```bash
+bash restoreDB.sh
+```

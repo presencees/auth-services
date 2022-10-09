@@ -8,13 +8,15 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - ".env/:/opt/app/.env"
-      - "index.js/:/opt/app/index.js"
+      - "./.env/:/opt/app/.env"
+      - "./index.js/:/opt/app/index.js"
     depends_on:
       - dbAuth
     networks:
       - auth
     restart: always
+    command: sh -c "node index.js"
+
   dbAuth:
     image: "mysql:5.7"
     container_name: db_auth
