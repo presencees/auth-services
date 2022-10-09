@@ -11,5 +11,6 @@ RUN npm install nodemon --location=global
 RUN chown -R app /opt/app
 USER app
 EXPOSE ${EXP_PORT}
-CMD [ "nodemon", "index.js"]
+CMD [ "node", "index.js"]
+# CMD [ "nodemon", "index.js"]
 # CMD ["pm2-runtime", "index.js"]
