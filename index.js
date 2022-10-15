@@ -65,11 +65,11 @@ app.post("/login", (req, res) => {
       };
       console.log(verify(token));
       res.setHeader("content-type", "application/json");
-      res.send(JSON.stringify({ status: 200, error: null, response: data }));
+      res.send(JSON.stringify({status: 200, error: null, response: data}));
     } else {
       res.setHeader("content-type", "application/json");
       res.send(
-        JSON.stringify({ status: 401, error: "Unauthorized", response: [] })
+        JSON.stringify({status: 401, error: "Unauthorized", response: []})
       );
     }
   });
@@ -82,7 +82,7 @@ app.post("/verify", (req, res) => {
   if (tokenVerify.status) {
     res.setHeader("content-type", "application/json");
     res.send(
-      JSON.stringify({ status: 200, error: null, response: tokenVerify.data })
+      JSON.stringify({status: 200, error: null, response: tokenVerify.data})
     );
   } else {
     res.setHeader("content-type", "application/json");
@@ -117,7 +117,7 @@ function verify(token) {
 function createJwt(userId) {
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
   let data = {
-    iss: now,
+    iss: process.env.ISS,
     exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
     userId,
   };
