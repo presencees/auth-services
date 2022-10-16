@@ -46,6 +46,28 @@ app.get("/", (req, res) => {
   );
 });
 
+app.post("/token", (req, res) => {
+  const refreshToken = req.body.token
+  conn.query("SELECT token FROM Tokens WHERE token='" + refreshToken + "'", (err, results) => {
+    if (err) throw err;
+
+    if (results.length == 0) {
+      res.sendStatus(403)
+    } else {
+
+      jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403)
+        const accessToken = createJwt(user)
+        const data = {
+          accessToken: accessToken,
+        };
+        res.send(JSON.stringify({status: 200, error: null, response: data}));
+      })
+
+    }
+  })
+})
+
 app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = md5(req.body.password);
@@ -60,10 +82,31 @@ app.post("/login", (req, res) => {
     if (results.length == 1) {
       // console.log(results[0]);
       const token = createJwt(results[0].user_id);
+      const refreshToken = jwt.sign(results[0].user_id, process.env.JWT_REFRESH_TOKEN_SECRET);
       const data = {
         accessToken: token,
+        refreshToken: refreshToken
       };
-      console.log(verify(token));
+      const datetime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      let userId = results[0].user_id
+      let checkToken =
+        "SELECT id FROM Tokens WHERE userId=" + results[0].user_id + "";
+      conn.query(checkToken, (err, results) => {
+        if (err) throw err;
+        if (results.length == 1) {
+          conn.query("UPDATE Tokens SET token = '" + refreshToken + "', updatedAt = '" + datetime + "' WHERE id = " + results[0].id + ";", (err, _) => {
+            if (err) throw err;
+            console.log("user token successfully updated!")
+          })
+        } else {
+          let insertToken =
+            "INSERT INTO Tokens VALUES (0," + userId + ",'" + refreshToken + "','" + datetime + "','" + datetime + "')";
+          conn.query(insertToken, (err, _) => {
+            if (err) throw err;
+            console.log("user token inserted successfully!")
+          })
+        }
+      })
       res.setHeader("content-type", "application/json");
       res.send(JSON.stringify({status: 200, error: null, response: data}));
     } else {
@@ -77,51 +120,37 @@ app.post("/login", (req, res) => {
 
 app.post("/verify", (req, res) => {
   const token = req.body.token;
-  const tokenVerify = verify(token);
-  console.log(tokenVerify.status);
-  if (tokenVerify.status) {
-    res.setHeader("content-type", "application/json");
-    res.send(
-      JSON.stringify({status: 200, error: null, response: tokenVerify.data})
-    );
-  } else {
-    res.setHeader("content-type", "application/json");
-    res.send(
-      JSON.stringify({
-        status: 403,
-        error: "ExpiredToken",
-        response: tokenVerify.data,
-      })
-    );
-  }
+  //const tokenVerify = verify(token, process.env.JWT_SECRET_KEY);
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, payload) => {
+    if (!err) {
+      res.setHeader("content-type", "application/json");
+      res.send(
+        JSON.stringify({status: 200, error: null, response: payload})
+      );
+    } else {
+      res.setHeader("content-type", "application/json");
+      res.status(401)
+      res.send(
+        JSON.stringify({
+          status: 'error',
+          error: err,
+        })
+      );
+    }
+
+  });
 });
 
 // functions
-function verify(token) {
-  const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
-  if (payload.exp - now > 0) {
-    return {
-      status: true,
-      msg: "Tuken sudah sesuai",
-      data: payload,
-    };
-  } else {
-    return {
-      status: false,
-      msg: "token sudah tidak berlaku.",
-      data: [],
-    };
-  }
-}
-
 function createJwt(userId) {
   let jwtSecretKey = process.env.JWT_SECRET_KEY;
   let data = {
     iss: process.env.ISS,
-    exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
+    //exp: now + 1000
+    //exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
     userId,
   };
-  const token = jwt.sign(data, jwtSecretKey);
+  const token = jwt.sign(data, jwtSecretKey, {expiresIn: '20s'});
   return token;
 }
 
