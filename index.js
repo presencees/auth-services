@@ -150,7 +150,7 @@ function createJwt(userId) {
     //exp: now + 1000 * 60 * 60 * 24, // satu hari (24 jam)
     userId,
   };
-  const token = jwt.sign(data, jwtSecretKey, {expiresIn: '20s'});
+  const token = jwt.sign(data, jwtSecretKey, {expiresIn: '2h'});
   return token;
 }
 
