@@ -30,3 +30,8 @@ docker-compose up -d
 ```bash
 bash restoreDB.sh
 ```
+
+## Migrate
+```bash
+docker-compose exec auth npx sequelize-cli db:migrate
+```
